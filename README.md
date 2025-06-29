@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # xiaoai-tts
 
 [![npm](https://img.shields.io/npm/v/xiaoai-tts.svg)](https://www.npmjs.com/package/xiaoai-tts)
@@ -241,3 +242,6 @@ const songList = await client.getMyPlaylist('337361232731772372')
 
 - https://bbs.hassbian.com/thread-7060-1-7.html
 - https://blog.csdn.net/leekwen/article/details/82378639
+=======
+# xiaoai-tts-news
+>>>>>>> 19a292d706a1097e23c6405a2378527879e17ff4

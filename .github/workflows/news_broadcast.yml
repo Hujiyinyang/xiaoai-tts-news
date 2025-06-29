@@ -12,10 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+      - name: Set npm registry to official
+        run: npm config set registry https://registry.npmjs.org/
       - name: Install dependencies
         run: npm install
       - name: Run news_broadcast.js
