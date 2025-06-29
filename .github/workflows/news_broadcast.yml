@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set npm registry to official
+      - name: Use official npm registry
         run: npm config set registry https://registry.npmjs.org/
       - name: Install dependencies
         run: npm install
