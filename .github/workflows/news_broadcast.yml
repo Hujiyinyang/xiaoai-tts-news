@@ -1,0 +1,26 @@
+name: XiaoAi News Broadcast
+
+on:
+  schedule:
+    # 每天北京时间7点（即UTC前一天23点）运行
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-news-broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install
+      - name: Run news_broadcast.js
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          XIAOMI_ACCOUNT: ${{ secrets.XIAOMI_ACCOUNT }}
+          XIAOMI_PASSWORD: ${{ secrets.XIAOMI_PASSWORD }}
+        run: node news_broadcast.js 
