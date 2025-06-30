@@ -1,7 +1,7 @@
-const http = require('http');
+const https = require('https');
 
 // arXiv API配置
-const ARXIV_API_BASE = 'http://export.arxiv.org/api/query';
+const ARXIV_API_BASE = 'https://export.arxiv.org/api/query';
 
 // 获取arXiv论文
 async function fetchArxivPapers(query, maxResults = 10, daysBack = 7) {
@@ -19,17 +19,18 @@ async function fetchArxivPapers(query, maxResults = 10, daysBack = 7) {
       sortOrder: 'descending'
     });
     
+    const urlObj = new URL(`${ARXIV_API_BASE}?${params.toString()}`);
     const options = {
-      hostname: 'export.arxiv.org',
-      port: 80,
-      path: `/api/query?${params.toString()}`,
+      hostname: urlObj.hostname,
+      port: 443,
+      path: urlObj.pathname + urlObj.search,
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'
       }
     };
 
-    const req = http.request(options, (res) => {
+    const req = https.request(options, (res) => {
       let data = '';
       
       res.on('data', (chunk) => {
@@ -110,16 +111,16 @@ function parseArxivXML(xmlData) {
 async function getAIResearchPapers() {
   try {
     console.log('正在获取具身智能相关论文...');
-    // 搜索一周内的具身智能相关论文
-    const embodiedPapers = await fetchArxivPapers('ti:"embodied intelligence" OR ti:"embodied AI" OR ti:"embodied agent" OR ti:"embodied robot" OR ti:"embodied learning" OR ti:"embodied cognition"', 15, 7);
+    // 使用测试验证的有效搜索策略
+    const embodiedPapers = await fetchArxivPapers('ti:"embodied intelligence" OR ti:"embodied AI" OR ti:"embodied agent" OR ti:"embodied robot" OR ti:"embodied learning" OR ti:"embodied cognition"', 20, 30);
     
     console.log('正在获取大模型相关论文...');
-    // 搜索一周内的大模型相关论文
-    const llmPapers = await fetchArxivPapers('ti:"large language model" OR ti:"LLM" OR ti:"foundation model" OR ti:"transformer" OR ti:"language model" OR ti:"GPT" OR ti:"BERT"', 15, 7);
+    // 使用测试验证的有效搜索策略
+    const llmPapers = await fetchArxivPapers('ti:"large language model" OR ti:"LLM" OR ti:"foundation model" OR ti:"transformer" OR ti:"language model" OR ti:"GPT" OR ti:"BERT"', 20, 30);
     
     const allPapers = [...embodiedPapers, ...llmPapers];
     
-    console.log(`成功获取 ${allPapers.length} 篇AI研究论文（最近一周）`);
+    console.log(`成功获取 ${allPapers.length} 篇AI研究论文（最近30天）`);
     
     return allPapers;
   } catch (error) {
