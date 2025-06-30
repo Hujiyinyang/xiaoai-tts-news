@@ -1,4 +1,5 @@
 const XiaoAi = require('./src/index.js')
+const { getProcessedNews, generateNewsSummary } = require('./news_api.js')
 
 // DeepSeek API配置
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || ''
@@ -85,7 +86,25 @@ async function getNewsBroadcast() {
   try {
     console.log('正在获取今日新闻...')
     
-    const prompt = `你是一位具备新闻分析、旅游推荐、科研汇总能力的智能播报助手。你的任务是生成一段完整自然、适合语音播报的全球信息摘要。
+    // 获取真实新闻数据
+    const newsList = await getProcessedNews()
+    
+    if (newsList.length === 0) {
+      return '由于网络连接问题，暂时无法获取最新新闻信息。愿你在纷繁世界中，听见秩序的声音，看见语言与知识的光芒。'
+    }
+    
+    // 生成新闻摘要
+    const newsSummary = generateNewsSummary(newsList)
+    console.log('新闻摘要:', newsSummary)
+    
+    // 构建DeepSeek提示词
+    const prompt = `你是一位具备新闻分析、旅游推荐、科研汇总能力的智能播报助手。你的任务是基于提供的新闻数据，生成一段完整自然、适合语音播报的全球信息摘要。
+
+【新闻数据】
+${newsSummary}
+
+【任务要求】
+请从上述新闻中精选20条最重要的新闻，并整合其他信息模块，生成一段完整的播报稿。
 
 【结构说明】请将以下所有模块内容整合为一个段落输出，风格连贯，有逻辑、有节奏、无编号、可自然朗读，不中断。
 
@@ -98,7 +117,7 @@ async function getNewsBroadcast() {
 ---
 
 【模块一：全球重大新闻】
-- 包含过去24小时内的10条国际与中国新闻
+- 从提供的新闻数据中精选20条最重要的国际与中国新闻
 - 类型包括战争外交、能源经济、国家领导人动态、中国政府及科技企业重大决策或发布
 - 每条必须包含参与国家、核心事件、时间点
 
@@ -150,19 +169,14 @@ async function getNewsBroadcast() {
 请根据以上要求生成一次完整的播报内容。`;
 
     const newsContent = await callDeepSeekAPI(prompt)
-    console.log('获取到的原始新闻内容:')
+    console.log('获取到的播报内容:')
     console.log(newsContent)
     
-    // 进行适度无害化处理（去除领导人相关句子）
-    const sanitizedContent = await sanitizeContent(newsContent)
-    console.log('处理后的新闻内容:')
-    console.log(sanitizedContent)
-    
-    return sanitizedContent
+    return newsContent
   } catch (error) {
     console.error('获取新闻失败:', error.message)
     // 返回一个默认的播报稿
-    return '由于网络连接问题，暂时无法获取最新新闻信息。愿你在纷繁世界中，听见秩序的声音，看见语言与知识的光芒。'
+    return '由于网络连接问题，暂时无法获取最新新闻信息。时代奔涌，技术与城市并进，愿你在变化中心有所定，在信息中看见世界的光。'
   }
 }
 
