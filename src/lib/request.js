@@ -1,4 +1,4 @@
-// const fetch = require('node-fetch')
+const fetch = require('node-fetch')
 const querystring = require('querystring')
 const { appendParam, parseResponseText } = require('./utils')
 const { MINA_UA, APP_UA } = require('../const')

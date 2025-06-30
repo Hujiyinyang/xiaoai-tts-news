@@ -1,3 +1,5 @@
+const https = require('https');
+
 const XiaoAi = require('./src/index.js')
 const { getProcessedNews, generateNewsSummary } = require('./news_api.js')
 
@@ -6,40 +8,63 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || ''
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions'
 
 async function callDeepSeekAPI(prompt) {
-  try {
-    const response = await fetch(DEEPSEEK_API_URL, {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 5000,
+      temperature: 1,
+      top_p: 0.9,
+      frequency_penalty: 0.1,
+      presence_penalty: 0.1,
+      system_prompt: "你是一个深度思考的AI助手，请仔细分析用户提供的信息，进行深入思考后给出高质量的回复。"
+    });
+
+    const options = {
+      hostname: 'api.deepseek.com',
+      port: 443,
+      path: '/v1/chat/completions',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          if (result.choices && result.choices[0]) {
+            resolve(result.choices[0].message.content);
+          } else {
+            reject(new Error(`API返回格式错误: ${data}`));
           }
-        ],
-        max_tokens: 1000,
-        temperature: 1,
-        top_p: 0.9,
-        frequency_penalty: 0.1,
-        presence_penalty: 0.1,
-        system_prompt: "你是一个深度思考的AI助手，请仔细分析用户提供的信息，进行深入思考后给出高质量的回复。"
-      })
-    })
+        } catch (error) {
+          reject(new Error(`解析响应失败: ${error.message}`));
+        }
+      });
+    });
 
-    if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status} ${response.statusText}`)
-    }
+    req.on('error', (error) => {
+      reject(new Error(`请求失败: ${error.message}`));
+    });
 
-    const data = await response.json()
-    return data.choices[0].message.content
-  } catch (error) {
-    console.error('调用DeepSeek API时出错:', error.message)
-    throw error
-  }
+    req.write(postData);
+    req.end();
+  });
 }
 
 // 预处理：去除中国国家领导人姓名相关句子
@@ -186,15 +211,19 @@ async function broadcastNews() {
     const devices = await client.getDevice()
     console.log('在线设备:', devices.map(d => d.name))
     
-    // 查找小爱音箱Pro设备
+    // 查找小爱音箱Pro设备，如果找不到就使用第一个设备
     const proDevice = devices.find(device => device.name.includes('Pro') || device.name.includes('pro'))
     
     if (proDevice) {
       // 切换到小爱音箱Pro
       await client.useDevice(proDevice.deviceID)
       console.log(`已切换到设备: ${proDevice.name}`)
+    } else if (devices.length > 0) {
+      // 使用第一个可用设备
+      await client.useDevice(devices[0].deviceID)
+      console.log(`使用默认设备: ${devices[0].name}`)
     } else {
-      console.log('未找到小爱音箱Pro，使用默认设备')
+      console.log('未找到可用设备，尝试使用默认设备')
     }
     
     // 获取新闻播报稿
