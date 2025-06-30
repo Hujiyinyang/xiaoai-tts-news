@@ -4,8 +4,13 @@ const http = require('http');
 const ARXIV_API_BASE = 'http://export.arxiv.org/api/query';
 
 // 获取arXiv论文
-async function fetchArxivPapers(query, maxResults = 10) {
+async function fetchArxivPapers(query, maxResults = 10, daysBack = 7) {
   return new Promise((resolve, reject) => {
+    // 计算一周前的日期
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - (daysBack * 24 * 60 * 60 * 1000));
+    const weekAgoStr = weekAgo.toISOString().split('T')[0].replace(/-/g, '');
+    
     const params = new URLSearchParams({
       search_query: query,
       start: 0,
@@ -35,7 +40,13 @@ async function fetchArxivPapers(query, maxResults = 10) {
         try {
           // 解析XML响应
           const papers = parseArxivXML(data);
-          resolve(papers);
+          // 过滤最近一周的论文
+          const recentPapers = papers.filter(paper => {
+            if (!paper.published) return false;
+            const paperDate = paper.published.substring(0, 10).replace(/-/g, '');
+            return paperDate >= weekAgoStr;
+          });
+          resolve(recentPapers);
         } catch (error) {
           reject(new Error(`解析arXiv响应失败: ${error.message}`));
         }
@@ -99,14 +110,16 @@ function parseArxivXML(xmlData) {
 async function getAIResearchPapers() {
   try {
     console.log('正在获取具身智能相关论文...');
-    const embodiedPapers = await fetchArxivPapers('ti:"embodied intelligence" OR ti:"embodied AI" OR ti:"embodied agent"', 5);
+    // 搜索一周内的具身智能相关论文
+    const embodiedPapers = await fetchArxivPapers('ti:"embodied intelligence" OR ti:"embodied AI" OR ti:"embodied agent" OR ti:"embodied robot" OR ti:"embodied learning" OR ti:"embodied cognition"', 15, 7);
     
     console.log('正在获取大模型相关论文...');
-    const llmPapers = await fetchArxivPapers('ti:"large language model" OR ti:"LLM" OR ti:"foundation model"', 5);
+    // 搜索一周内的大模型相关论文
+    const llmPapers = await fetchArxivPapers('ti:"large language model" OR ti:"LLM" OR ti:"foundation model" OR ti:"transformer" OR ti:"language model" OR ti:"GPT" OR ti:"BERT"', 15, 7);
     
     const allPapers = [...embodiedPapers, ...llmPapers];
     
-    console.log(`成功获取 ${allPapers.length} 篇AI研究论文`);
+    console.log(`成功获取 ${allPapers.length} 篇AI研究论文（最近一周）`);
     
     return allPapers;
   } catch (error) {
