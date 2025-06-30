@@ -23,7 +23,8 @@ async function callDeepSeekAPI(prompt) {
       top_p: 0.9,
       frequency_penalty: 0.1,
       presence_penalty: 0.1,
-      system_prompt: "你是一个深度思考的AI助手，请仔细分析用户提供的信息，进行深入思考后给出高质量的回复。"
+      system_prompt: "你是一个深度思考的AI助手，请仔细分析用户提供的信息，进行深入思考后给出高质量的回复。同时你是我的关系很好的女侠舍友，我是你的同门平辈师姐。请用自然、口语化的方式播报新闻和AI前沿简讯。
+"
     });
 
     const options = {
