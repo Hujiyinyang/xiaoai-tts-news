@@ -141,7 +141,7 @@ async function getNewsBroadcast() {
     console.log('=== 开始调用DeepSeek进行筛选 ===')
     
     // 构建DeepSeek提示词
-    const prompt = `你是一位新闻播报助手。请从以下40条新闻中精选15条最重要的新闻，生成一段简洁的播报稿，然后在新闻播报后生成简短的AI科研前沿简讯。
+    const prompt = `你是原神里的霄宫，同时也是我的关系很好的女侠舍友，我是你的同门平辈师姐，你称呼我为水北哥。请用自然、口语化的方式播报新闻和AI前沿简讯，假如犀利的评价。输出内容无需任何排版，不要有多余的换行、空格或格式修饰。
 
 【新闻数据】
 ${newsSummary}
@@ -150,14 +150,20 @@ ${newsSummary}
 ${arxivSummary}
 
 【要求】
+<<<<<<< HEAD
 1. 新闻播报：精选22条最重要新闻，生成一段1500字以内的自然播报稿
 2. AI科研简讯：基于arXiv数据，生成1500字以内的AI研究前沿简讯
 3. 语言简洁，避免重复，适合语音播报
 4. 总字数控制在3000字以内
+=======
+1. 新闻播报：精选30条最重要新闻，重点关注国际政治局势与中国国内政策，生成详细、自然、适合语音播报的播报稿
+2. AI科研简讯：基于arXiv数据，生成详细的AI研究前沿简讯
+3. 语言流畅，适合语音播报，风格亲切幽默
+4. 总字数控制在2500字以内
+5. 只用中文逗号（，）分句，不要用感叹号（！）、问号（？）等符号。
+>>>>>>> 5bea8da (feat: 优化DeepSeek prompt与本地分段逻辑，完善人设与播报体验)
 
-请按以下格式输出：
-新闻播报稿：[播报内容]
-AI科研前沿简讯：[简讯内容]`;
+请直接输出：[播报内容]`;
 
     const newsContent = await callDeepSeekAPI(prompt)
     console.log('=== DeepSeek筛选结果 ===')
@@ -172,52 +178,38 @@ AI科研前沿简讯：[简讯内容]`;
   }
 }
 
-// 智能播放文本 - 支持分段播报
+// 清洗乱码工具函数
+function cleanText(text) {
+  // 保留中英文、数字、常用标点，去除其他乱码
+  return text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9，。！？、；：""''()\[\]{}\s]/g, '')
+}
+
+// 智能播放文本 - 支持按"。"分段播报，朗读时去除分割符，插入切换提示
 async function playSmartText(client, text) {
   console.log('=== 开始播报 ===')
-  
-  // 分段播报内容
-  const segments = text.split('AI科研前沿简讯：')
-  if (segments.length >= 2) {
-    const newsPart = segments[0].replace('新闻播报稿：', '').replace('【新闻播报稿】', '').trim()
-    const arxivPart = segments[1].trim()
-    
-    console.log('=== 分段播报 ===')
-    console.log('新闻部分:', newsPart)
-    console.log('arXiv部分:', arxivPart)
-    
-    // 先播报新闻部分
-    console.log('正在播报新闻部分...')
+
+  // 清洗乱码
+  text = cleanText(text)
+
+  // 按"。"分段
+  const segments = text.split('。').map(s => s.trim()).filter(s => s.length > 0)
+
+  for (let i = 0; i < segments.length; i++) {
+    let sentence = segments[i]
+    // 还原句号
+    sentence += '。'
     try {
-      await client.say(newsPart)
-      console.log('新闻播报完成')
-      
-      // 等待3秒后播报arXiv部分
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      
-      console.log('正在播报arXiv部分...')
-      await client.say(arxivPart)
-      console.log('arXiv播报完成')
-      
+      console.log(`正在播报第${i + 1}段:`, sentence)
+      await client.say(sentence)
     } catch (error) {
-      console.error('分段播报失败:', error.message)
-      // 如果分段播报失败，尝试一次性播报
-      console.log('尝试一次性播报...')
-      try {
-        await client.say(text)
-        console.log('一次性播报成功')
-      } catch (finalError) {
-        console.error('一次性播放失败:', finalError.message)
-      }
+      console.error(`第${i + 1}段播报失败:`, error.message)
+      continue;
     }
-  } else {
-    // 如果无法分段，直接播报
-    console.log('直接尝试一次性播放全部内容...')
-    try {
-      await client.say(text)
-      console.log('一次性播报成功')
-    } catch (error) {
-      console.error('一次性播放失败:', error.message)
+    // 等待时间：每6个字等待1秒，最少1秒
+    const waitSec = Math.max(1, Math.round(sentence.length / 5.5))
+    if (i < segments.length - 1) {
+      console.log(`等待${waitSec}秒...`)
+      await new Promise(resolve => setTimeout(resolve, waitSec * 1000))
     }
   }
 }

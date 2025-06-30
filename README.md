@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # xiaoai-tts
 
 [![npm](https://img.shields.io/npm/v/xiaoai-tts.svg)](https://www.npmjs.com/package/xiaoai-tts)
@@ -106,7 +105,7 @@ const roomDevice = await client.getDevice('卧室小爱')
 ```javascript
 const roomDevice = await client.getDevice('卧室小爱')
 
-// 使用“卧室小爱”
+// 使用"卧室小爱"
 client.useDevice(roomDevice.deviceID)
 
 client.say('你好，我是卧室的小爱')
@@ -242,6 +241,29 @@ const songList = await client.getMyPlaylist('337361232731772372')
 
 - https://bbs.hassbian.com/thread-7060-1-7.html
 - https://blog.csdn.net/leekwen/article/details/82378639
-=======
-# xiaoai-tts-news
->>>>>>> 19a292d706a1097e23c6405a2378527879e17ff4
+
+# 小爱同学播报新闻+AI前沿简讯自动化系统
+
+## 主要功能
+- 自动获取新闻、arXiv论文，敏感词过滤，DeepSeek智能生成播报稿
+- 支持小爱音箱自动登录、设备切换、分段播报、自动等待
+- 支持GitHub Actions/定时任务自动化运行
+
+## 分割与播报逻辑
+- DeepSeek返回内容采用"¥¥¥"作为唯一分割符，所有新闻与AI简讯段落均用"¥¥¥"分割
+- 主流程分割逻辑与`test_split_yy.js`测试脚本完全一致：
+  - 用`SPLIT_FLAG = '¥¥¥'`分割内容，去除空白
+  - 检查每段内容是否还包含分割符，异常则跳过
+  - 每段内容自动等待，适合语音播报
+
+## 测试脚本
+- `test_split_yy.js` 可单独运行，验证任意文本的"¥¥¥"分割效果和分割异常检测
+
+## 运行方法
+- 配置环境变量：`DEEPSEEK_API_KEY`、`XIAOMI_ACCOUNT`、`XIAOMI_PASSWORD`
+- 运行主程序：`node news_broadcast.js`
+- 运行分割测试：`node test_split_yy.js`
+
+## 注意事项
+- DeepSeek输出内容必须严格用"¥¥¥"分割，否则分割异常会被日志提示并跳过
+- 若单段内容过长，建议在DeepSeek提示词中要求"每段不超过300字"
