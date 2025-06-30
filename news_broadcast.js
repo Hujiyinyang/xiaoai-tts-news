@@ -2,6 +2,7 @@ const https = require('https');
 
 const XiaoAi = require('./src/index.js')
 const { getProcessedNews, generateNewsSummary } = require('./news_api.js')
+const { getAIResearchPapers, generateArxivSummary, processArxivPapers } = require('./arxiv_api.js')
 
 // DeepSeek API配置
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || ''
@@ -122,27 +123,37 @@ async function getNewsBroadcast() {
       return '由于网络连接问题，暂时无法获取最新新闻信息。时代奔涌，技术与城市并进，愿你在变化中心有所定，在信息中看见世界的光。'
     }
     
+    // 获取arXiv论文数据
+    const arxivPapers = await getAIResearchPapers()
+    
     // 生成新闻摘要
     const newsSummary = generateNewsSummary(newsList)
-    console.log('=== 本地新闻处理结果 ===')
-    console.log('获取到的新闻数量:', newsList.length)
-    console.log('新闻摘要:', newsSummary)
-    console.log('=== 新闻详情 ===')
-    newsList.forEach((news, index) => {
-      console.log(`${index + 1}. [${news.category}] ${news.title} (${news.source}, ${news.time})`)
-    })
+    
+    // 生成arXiv摘要
+    const arxivSummary = generateArxivSummary(arxivPapers)
+    
+    // 打印完整发送给DeepSeek的内容
+    console.log('=== 发送给DeepSeek的完整内容 ===')
+    console.log('新闻数据:')
+    console.log(newsSummary)
+    console.log('\narXiv论文数据:')
+    console.log(arxivSummary)
     console.log('=== 开始调用DeepSeek进行筛选 ===')
     
     // 构建DeepSeek提示词
-    const prompt = `你是一位具备新闻分析、筛选、提炼能力的智能播报助手。你的任务是基于我提供的新闻数据，从中筛选出20条最重要的新闻，生成一段完整自然、适合语音播报的信息摘要。
+    const prompt = `你是一位具备新闻分析、筛选、提炼能力的智能播报助手。你的任务是基于我提供的新闻数据和arXiv论文数据，生成一段完整自然、适合语音播报的信息摘要。
 
 【新闻数据】
 ${newsSummary}
 
+【arXiv论文数据】
+${arxivSummary}
+
 【任务说明】
-请根据以下筛选要求，从上述新闻中甄选出20条最具价值的信息内容，并生成一段自然流畅的播报稿：
+请根据以下筛选要求，从上述40条新闻中甄选出22条最具价值的信息内容，并生成一段自然流畅的播报稿，然后在新闻播报后生成中文的arXiv信息简讯：
 
 【筛选要求】：
+- 从40条新闻中精选22条最重要的新闻
 - 优先选择以下类型的新闻：
   · 杭州本地新闻（如政策、交通、企业、基建等）
   · 中国国家级新闻（含科技、产业、外交、经济）
@@ -156,20 +167,27 @@ ${newsSummary}
   · **信息来源**（如新华社、路透社、彭博社、CNN、科技日报、Nature 等）
 
 【语言风格要求】：
-- 全文为**一个自然段**，可语音顺畅播报
+- 新闻播报部分为**一个自然段**，可语音顺畅播报
 - 不使用"今天""刚刚"等即时词汇，应具有长期适用性
 - 避免使用"死亡""爆炸"等过度刺激性词汇；可替换为"人道局势恶化""局部局势紧张"等委婉表达
 - 内容应有逻辑、有节奏、无编号、不换行
-- 如涉及日本、旅游、天气等信息，也可适度加入，增强多样性与生活实用性
+
+【arXiv信息简讯要求】：
+- 在新闻播报后，单独生成一段"AI科研前沿简讯"
+- 基于提供的arXiv论文数据，用中文总结最新的具身智能和大模型研究进展
+- 语言通俗易懂，适合普通听众理解
+- 突出研究的创新点和实际应用价值
 
 【输出格式要求】：
-- 播报稿为**一段自然语言组成的完整段落**
+- 第一部分：新闻播报稿（一段自然语言组成的完整段落）
+- 第二部分：AI科研前沿简讯（单独一段，用中文介绍arXiv最新研究）
 - 内容逻辑通顺，语言流畅
-- 字数建议在1500字左右，允许略有增减
+- **总字数控制在1000字以内**，避免内容过长
+- **不要使用任何markdown格式标记**，直接输出纯文本
 - 在结尾加入一句温和收束的诗意句子，如：
   "时代奔涌，技术与城市并进，愿你在变化中心有所定，在信息中看见世界的光。"
 
-请根据以上说明生成一次完整的播报内容。`;
+请根据以上说明生成完整的播报内容，包含新闻播报和arXiv信息简讯两部分。`;
 
     const newsContent = await callDeepSeekAPI(prompt)
     console.log('=== DeepSeek筛选结果 ===')
@@ -184,15 +202,53 @@ ${newsSummary}
   }
 }
 
-// 智能播放文本 - 只做一次性播放
+// 智能播放文本 - 支持分段播报
 async function playSmartText(client, text) {
-  console.log('直接尝试一次性播放全部内容...')
-  try {
-    const result = await client.say(text)
-    console.log('一次性播放完成！')
-    console.log('响应结果:', result)
-  } catch (error) {
-    console.error('一次性播放失败:', error.message)
+  console.log('=== 开始播报 ===')
+  
+  // 分段播报内容
+  const segments = text.split('AI科研前沿简讯：')
+  if (segments.length >= 2) {
+    const newsPart = segments[0].replace('新闻播报稿：', '').replace('【新闻播报稿】', '').trim()
+    const arxivPart = segments[1].trim()
+    
+    console.log('=== 分段播报 ===')
+    console.log('新闻部分:', newsPart)
+    console.log('arXiv部分:', arxivPart)
+    
+    // 先播报新闻部分
+    console.log('正在播报新闻部分...')
+    try {
+      await client.say(newsPart)
+      console.log('新闻播报完成')
+      
+      // 等待3秒后播报arXiv部分
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
+      console.log('正在播报arXiv部分...')
+      await client.say(arxivPart)
+      console.log('arXiv播报完成')
+      
+    } catch (error) {
+      console.error('分段播报失败:', error.message)
+      // 如果分段播报失败，尝试一次性播报
+      console.log('尝试一次性播报...')
+      try {
+        await client.say(text)
+        console.log('一次性播报成功')
+      } catch (finalError) {
+        console.error('一次性播放失败:', finalError.message)
+      }
+    }
+  } else {
+    // 如果无法分段，直接播报
+    console.log('直接尝试一次性播放全部内容...')
+    try {
+      await client.say(text)
+      console.log('一次性播报成功')
+    } catch (error) {
+      console.error('一次性播放失败:', error.message)
+    }
   }
 }
 
