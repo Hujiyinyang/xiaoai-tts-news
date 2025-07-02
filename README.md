@@ -8,6 +8,18 @@ This project enables Xiaomi XiaoAi Speaker to automatically fetch and broadcast 
 
 ---
 
+## 需要替换成自己的内容 | What You Need to Customize
+
+1. **小米账号与密码**：请将 `XIAOMI_ACCOUNT` 和 `XIAOMI_PASSWORD` 替换为你自己的小米账号和密码。
+2. **DeepSeek API Key**：请在环境变量 `DEEPSEEK_API_KEY` 中填写你自己的 DeepSeek 大模型 API Key。
+3. **新闻API**：你可以自定义新闻数据源，推荐使用 [阿里云新闻API](https://market.aliyun.com/apimarket/detail/cmapi011178)。在 `news_api.js` 中配置自己的API Key和接口地址。
+
+1. **Xiaomi Account & Password**: Replace `XIAOMI_ACCOUNT` and `XIAOMI_PASSWORD` with your own Xiaomi account and password.
+2. **DeepSeek API Key**: Set your own DeepSeek API Key in the `DEEPSEEK_API_KEY` environment variable.
+3. **News API**: You can customize the news data source. Recommended: [Aliyun News API](https://market.aliyun.com/apimarket/detail/cmapi011178). Configure your API key and endpoint in `news_api.js`.
+
+---
+
 ## 主要特点 | Key Features
 
 - **自动获取新闻与AI论文摘要**：集成主流新闻API与arXiv论文API，自动整理每日要闻与AI前沿。
@@ -30,12 +42,12 @@ This project enables Xiaomi XiaoAi Speaker to automatically fetch and broadcast 
 
 - 小米小爱音箱 API（xiaoai-tts）
 - DeepSeek 大模型 API（https://api.deepseek.com/v1/chat/completions）
-- 新闻聚合API（如news_api.js中自定义）
+- 新闻聚合API（如news_api.js中自定义，推荐 [阿里云新闻API](https://market.aliyun.com/apimarket/detail/cmapi011178)）
 - arXiv 论文API（arxiv_api.js）
 
 - Xiaomi XiaoAi Speaker API (xiaoai-tts)
 - DeepSeek LLM API (https://api.deepseek.com/v1/chat/completions)
-- News aggregation API (custom in news_api.js)
+- News aggregation API (custom in news_api.js, recommend [Aliyun News API](https://market.aliyun.com/apimarket/detail/cmapi011178))
 - arXiv research API (arxiv_api.js)
 
 ---
@@ -63,6 +75,25 @@ export DEEPSEEK_API_KEY=你的DeepSeek Key
 ```bash
 node news_broadcast.js
 ```
+
+---
+
+## 定时自动播报的方法 | How to Schedule Auto-Broadcast
+
+你可以使用 `crontab` 或 Windows 任务计划等方式定时运行 `news_broadcast.js`，实现自动新闻播报。
+
+- **Linux/Mac 示例**：
+
+```bash
+crontab -e
+# 每天早上8点自动播报
+0 8 * * * cd /你的项目路径/xiaoai-tts-news && /usr/local/bin/node news_broadcast.js
+```
+
+- **Windows 示例**：
+  使用"任务计划程序"添加定时任务，执行 `node news_broadcast.js`。
+
+You can use `crontab` (Linux/Mac) or Task Scheduler (Windows) to run `news_broadcast.js` at regular intervals for auto-broadcast.
 
 ---
 
