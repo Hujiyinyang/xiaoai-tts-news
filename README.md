@@ -1,269 +1,117 @@
-# xiaoai-tts
+# XiaoAi TTS News Broadcast
 
-[![npm](https://img.shields.io/npm/v/xiaoai-tts.svg)](https://www.npmjs.com/package/xiaoai-tts)
+## 项目简介 | Project Introduction
 
-小爱音箱自定义文本朗读。
+本项目基于小爱音箱，实现自动获取新闻与AI前沿论文摘要，并通过小爱音箱进行自然语音播报。支持内容智能分段、敏感信息规避、角色人设自定义（如原神霄宫风格），适合家庭、学习、科技爱好者等多场景使用。
 
-> 不止是 TTS
+This project enables Xiaomi XiaoAi Speaker to automatically fetch and broadcast daily news and AI research summaries with natural speech. It supports smart text segmentation, sensitive information filtering, and customizable persona (e.g., Genshin Impact's XIAOGONG style). Suitable for home, study, and tech enthusiasts.
 
-## 安装
+---
+
+## 主要特点 | Key Features
+
+- **自动获取新闻与AI论文摘要**：集成主流新闻API与arXiv论文API，自动整理每日要闻与AI前沿。
+- **敏感内容规避**：自动过滤中国敏感词、领导人相关内容，适合家庭环境。
+- **DeepSeek大模型智能润色**：调用DeepSeek API生成自然、口语化、带人设风格的播报稿。
+- **本地智能分段**：按句号（。）自动分段，提升语音播报体验。
+- **角色人设自定义**：可在代码中自定义DeepSeek的角色设定（如原神霄宫、女侠舍友等）。
+- **参数灵活可调**：支持自定义账号、API Key、分段逻辑、播报等待时长等。
+
+- **Auto-fetch news & AI research**: Integrates mainstream news APIs and arXiv for daily highlights.
+- **Sensitive content filtering**: Automatically removes Chinese sensitive words and leader-related content.
+- **DeepSeek LLM enhancement**: Uses DeepSeek API for natural, persona-driven news scripts.
+- **Local smart segmentation**: Segments by Chinese period (。) for better TTS experience.
+- **Persona customization**: Easily set DeepSeek persona (e.g., Genshin Xiaogong, martial arts roommate).
+- **Flexible parameters**: Customizable account, API key, segmentation, and wait time.
+
+---
+
+## 用到的API | APIs Used
+
+- 小米小爱音箱 API（xiaoai-tts）
+- DeepSeek 大模型 API（https://api.deepseek.com/v1/chat/completions）
+- 新闻聚合API（如news_api.js中自定义）
+- arXiv 论文API（arxiv_api.js）
+
+- Xiaomi XiaoAi Speaker API (xiaoai-tts)
+- DeepSeek LLM API (https://api.deepseek.com/v1/chat/completions)
+- News aggregation API (custom in news_api.js)
+- arXiv research API (arxiv_api.js)
+
+---
+
+## 快速开始 | Quick Start
+
+1. 克隆项目并安装依赖 | Clone & Install
 
 ```bash
-npm i xiaoai-tts
+git clone https://github.com/Hujiyinyang/xiaoai-tts-news.git
+cd xiaoai-tts-news
+npm install
 ```
 
-## 使用
+2. 配置环境变量 | Set Environment Variables
 
-```javascript
-const XiaoAi = require('xiaoai-tts')
-
-// 输入小米账户名，密码
-const client = new XiaoAi('fish', '123456')
-
-// 朗读文本
-client.say('你好，我是小爱')
+```bash
+export XIAOMI_ACCOUNT=你的账号
+export XIAOMI_PASSWORD=你的密码
+export DEEPSEEK_API_KEY=你的DeepSeek Key
 ```
 
-## API
+3. 运行主程序 | Run Main Script
 
-### Class: XiaoAi
-
-#### new XiaoAi(username, password)
-
-- `username` `{String}` 小米账户用户名
-- `password` `{String}` 账户密码
-
-使用小米账户登录小爱音箱
-
-#### new XiaoAi(session)
-
-- `session` `{Object}` Session 信息
-  - `userId` `{String}`
-  - `serviceToken` `{String}`
-
-使用 `Session` 登录。
-
-使用小米账户登录后，调用 `connect()` 返回用户登录信息；
-`Session` 可持久化保存，实例化 `XiaoAi` 时可直接传入：
-
-```javascript
-const fs = require('fs')
-let client = null
-
-try {
-  // 尝试读取本地 Session 信息
-  const Session = fs.readFileSync('~/xiaoai/session', { encoding: 'utf8' })
-
-  // 通过 Session 登录
-  client = new XiaoAi(JSON.parse(Session))
-} catch (e) {
-  client = new XiaoAi('fish', '123456')
-
-  const Session = await client.connect()
-
-  // 将 Session 储存到本地
-  fs.writeFileSync('~/xiaoai/session', JSON.stringify(Session))
-}
+```bash
+node news_broadcast.js
 ```
 
-### instance
+---
 
-XiaoAi 实例对象
+## 如何自定义DeepSeek人设 | How to Customize DeepSeek Persona
 
-#### say(text)
+在 `news_broadcast.js` 文件中，找到如下 prompt 片段：
 
-- `text` `{String}` 文本信息
-- Returns: `{Promise<Response>}`
-
-朗读指定文本，返回接口调用结果
-
-```javascript
-client.say('你好，我是小爱')
+```js
+const prompt = `你是原神里的霄宫，同时也是我的关系很好的女侠舍友，我是你的同门平辈师姐。...`
 ```
 
-#### getDevice([name])
+你可以将"你是原神里的霄宫..."这句话替换为你想要的任何角色设定。例如：
 
-- `name` `{String}` 设备名称(别名)
-- Returns: `{Promise<Promise<Object[] | Object | null>}` 设备信息
+- 你是原神里的甘雨...
+- 你是一个科技新闻主播...
+- 你是我的AI助手...
 
-获取**在线**设备列表
+保存后重新运行即可生效。
 
-```javascript
-// 获取所有在线设备
-const onlineDevices = await client.getDevice()
+In `news_broadcast.js`, locate the prompt string above. You can freely change the persona description to any style you like (e.g., Ganyu from Genshin, tech news anchor, etc.), then rerun the script.
 
-// 获取单个设备，未找到时返回 null
-const roomDevice = await client.getDevice('卧室小爱')
-```
+---
 
-#### useDevice(deviceId)
+## 参数说明 | Parameters
 
-- `deviceId` `{String}` 设备 id
+- `XIAOMI_ACCOUNT`：小米账号（必填）
+- `XIAOMI_PASSWORD`：小米密码（必填）
+- `DEEPSEEK_API_KEY`：DeepSeek大模型API Key（必填）
+- `news_api.js`、`arxiv_api.js`：可自定义新闻与论文数据源
+- 播报等待时长：每6个字等待1秒，可在 `playSmartText` 函数中调整
+- 分段逻辑：按"."分段，可在 `playSmartText` 函数中自定义
 
-切换指定设备。`xiaomi-tts` 实例化后默认使用 `getDevice()` 方法返回的第一个设备，可使用此方法切换为指定设备。
+- `XIAOMI_ACCOUNT`: Xiaomi account (required)
+- `XIAOMI_PASSWORD`: Xiaomi password (required)
+- `DEEPSEEK_API_KEY`: DeepSeek API key (required)
+- `news_api.js`, `arxiv_api.js`: Customizable news & paper sources
+- Wait time: 1s per 6 chars, adjustable in `playSmartText`
+- Segmentation: by '.', customizable in `playSmartText`
 
-```javascript
-const roomDevice = await client.getDevice('卧室小爱')
+---
 
-// 使用"卧室小爱"
-client.useDevice(roomDevice.deviceID)
+## 贡献与反馈 | Contribution & Feedback
 
-client.say('你好，我是卧室的小爱')
-```
+欢迎提交PR、Issue或建议！
 
-#### connect()
+PRs, issues, and suggestions are welcome!
 
-- Returns: `{Promise<Session>}` session 信息
-  - `Session.userId` `{String}`
-  - `Session.serviceToken` `{String}`
+---
 
-获取 `Session` 信息
+## License
 
-```javascript
-const Session = await client.connect()
-```
-
-#### test()
-
-- Returns: `{Promise<Response>}`
-
-测试连通性
-
-```javascript
-client.test()
-```
-
-### 媒体控制
-
-#### setVolume(volume)
-
-- `volume` `{Number}` 音量值
-- Returns: `{Promise<Response>}`
-
-设置音量
-
-```javascript
-client.setVolume(30)
-```
-
-#### getVolume()
-
-- Returns: `{Promise<Number>}` 音量值
-
-获取音量
-
-```javascript
-const volume = await client.getVolume()
-```
-
-#### volumeUp()
-
-- Returns: `{Promise<Response>}`
-
-调高音量，幅度 5
-
-#### volumeDown()
-
-- Returns: `{Promise<Response>}`
-
-调低音量，幅度 5
-
-#### getStatus()
-
-- Returns: `{Promise<Response>}` 状态信息
-
-获取设备运行状态
-
-#### play()
-
-- Returns: `{Promise<Response>}`
-
-继续播放
-
-#### pause()
-
-- Returns: `{Promise<Response>}`
-
-暂停播放
-
-#### togglePlayState()
-
-- Returns: `{Promise<Response>}`
-
-切换播放状态(播放/暂停)
-
-#### prev()
-
-- Returns: `{Promise<Response>}`
-
-播放上一曲
-
-#### next()
-
-- Returns: `{Promise<Response>}`
-
-播放下一曲
-
-#### getSongInfo(songId)
-
-- `songId` `{String}` 歌曲 id
-- Returns: `{Promise<Response | null>}` 歌曲信息
-
-查询歌曲信息
-
-```javascript
-const songInfo = await client.getSongInfo('7519904358300484678')
-```
-
-#### getMyPlaylist([listId])
-
-- `listId` `{String}` 歌单 id
-- Returns: `{Promise<Object[]>}` 歌曲信息
-
-获取用户自建歌单，当指定 `listId` 时，将返回目标歌单内的歌曲列表
-
-```javascript
-// 获取歌单列表
-const myPlaylist = await client.getMyPlaylist()
-
-// 获取歌单内的歌曲列表
-const songList = await client.getMyPlaylist('337361232731772372')
-```
-
-#### playUrl(url)
-
-- `url` `{String}` 音频地址
-- Returns: `{Promise<Response>}`
-
-播放在线音频
-
-## 参考链接
-
-- https://bbs.hassbian.com/thread-7060-1-7.html
-- https://blog.csdn.net/leekwen/article/details/82378639
-
-# 小爱同学播报新闻+AI前沿简讯自动化系统
-
-## 主要功能
-- 自动获取新闻、arXiv论文，敏感词过滤，DeepSeek智能生成播报稿
-- 支持小爱音箱自动登录、设备切换、分段播报、自动等待
-- 支持GitHub Actions/定时任务自动化运行
-
-## 分割与播报逻辑
-- DeepSeek返回内容采用"¥¥¥"作为唯一分割符，所有新闻与AI简讯段落均用"¥¥¥"分割
-- 主流程分割逻辑与`test_split_yy.js`测试脚本完全一致：
-  - 用`SPLIT_FLAG = '¥¥¥'`分割内容，去除空白
-  - 检查每段内容是否还包含分割符，异常则跳过
-  - 每段内容自动等待，适合语音播报
-
-## 测试脚本
-- `test_split_yy.js` 可单独运行，验证任意文本的"¥¥¥"分割效果和分割异常检测
-
-## 运行方法
-- 配置环境变量：`DEEPSEEK_API_KEY`、`XIAOMI_ACCOUNT`、`XIAOMI_PASSWORD`
-- 运行主程序：`node news_broadcast.js`
-- 运行分割测试：`node test_split_yy.js`
-
-## 注意事项
-- DeepSeek输出内容必须严格用"¥¥¥"分割，否则分割异常会被日志提示并跳过
-- 若单段内容过长，建议在DeepSeek提示词中要求"每段不超过300字"
+MIT
