@@ -1,4 +1,4 @@
-# XiaoAi TTS News Broadcast
+# 小爱同学新闻播报与AI简讯自动化系统 | XiaoAi News & AI Briefing Automation System
 
 ## 项目简介 | Project Introduction
 
@@ -93,7 +93,7 @@ In `news_broadcast.js`, locate the prompt string above. You can freely change th
 - `DEEPSEEK_API_KEY`：DeepSeek大模型API Key（必填）
 - `news_api.js`、`arxiv_api.js`：可自定义新闻与论文数据源
 - 播报等待时长：每6个字等待1秒，可在 `playSmartText` 函数中调整
-- 分段逻辑：按"."分段，可在 `playSmartText` 函数中自定义
+- 分段逻辑：按"。"分段，可在 `playSmartText` 函数中自定义
 
 - `XIAOMI_ACCOUNT`: Xiaomi account (required)
 - `XIAOMI_PASSWORD`: Xiaomi password (required)
@@ -109,6 +109,13 @@ In `news_broadcast.js`, locate the prompt string above. You can freely change th
 欢迎提交PR、Issue或建议！
 
 PRs, issues, and suggestions are welcome!
+
+---
+
+## 鸣谢 | Acknowledgements
+
+- 感谢 [MIGPT](https://github.com/shaonianzhentan/migpt) 及所有开源小爱同学相关项目的启发与技术支持。
+- Thanks to [MIGPT](https://github.com/shaonianzhentan/migpt) and all open-source XiaoAi-related projects for inspiration and technical support.
 
 ---
 
