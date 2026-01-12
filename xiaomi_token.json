@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-01-12T07:47:51.110Z",
+  "expiresAt": "2026-01-13T07:47:51.110Z",
+  "serviceToken": "sXEJMjSdm6MHAaBJzdchBxWnAFTYIDd8IG4lsrr3Lzp9mQyoAxLMxiruUOisTn47XEjPz7DHDm6Vgu/zqz6DBBt8K3BXDurhPJdICJQkCZbbVP8AeIxLLV1vjwNBWBQPdNTHNuDDuhWEg1mwxTC6QGGK2tnYuXMHzgoX4jlNMxx3kgRWSKoB7LqU6GN28/BBLiKZlvrrccB3EillHSgojA==",
+  "userId": 2369761180,
+  "cookie": "userId=2369761180;serviceToken=sXEJMjSdm6MHAaBJzdchBxWnAFTYIDd8IG4lsrr3Lzp9mQyoAxLMxiruUOisTn47XEjPz7DHDm6Vgu/zqz6DBBt8K3BXDurhPJdICJQkCZbbVP8AeIxLLV1vjwNBWBQPdNTHNuDDuhWEg1mwxTC6QGGK2tnYuXMHzgoX4jlNMxx3kgRWSKoB7LqU6GN28/BBLiKZlvrrccB3EillHSgojA==;deviceId=481a0f4b-e922-4b4e-952f-bd89ce9e930a;sn=62833/85UF08789",
+  "deviceId": "481a0f4b-e922-4b4e-952f-bd89ce9e930a",
+  "serialNumber": "62833/85UF08789",
+  "devices": [
+    {
+      "name": "东海郡",
+      "deviceID": "481a0f4b-e922-4b4e-952f-bd89ce9e930a",
+      "serialNumber": "62833/85UF08789"
+    },
+    {
+      "name": "402楼下小米小爱音箱Play增强版",
+      "deviceID": "611ba317-dacd-48c7-8168-36047dfbe656",
+      "serialNumber": "31833/D4XE28514"
+    },
+    {
+      "name": "Xiaomi 智能音箱 Pro",
+      "deviceID": "ad58829a-2b69-4591-9a09-87d7835b98c7",
+      "serialNumber": "62833/A4ZB84312"
+    },
+    {
+      "name": "小米小爱音箱Play增强版",
+      "deviceID": "dfaccc6f-df8b-4e9a-aa68-a9919dad8000",
+      "serialNumber": "31833/D4XE17889"
+    }
+  ]
+}
