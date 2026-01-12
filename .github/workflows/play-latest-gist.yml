@@ -1,0 +1,65 @@
+name: Play Latest Gist on XiaoAi
+
+permissions:
+  contents: read
+
+on:
+  # GitHub Actions 的 schedule 使用 UTC。
+  # 东京时间 07:30（JST, UTC+9）= UTC 22:30（前一天）
+  schedule:
+    - cron: "30 22 * * *"
+  workflow_dispatch:
+    inputs:
+      content_gist_id:
+        description: "每天更新内容的 Gist ID（要朗读/播放的那个）"
+        required: false
+        default: "98a0ff2a43ef197019f112f4a26b2574"
+      content_gist_token:
+        description: "内容 Gist 若为私有则填 PAT（可选，权限仅 gist）"
+        required: false
+      device_id:
+        description: "目标设备 deviceID（默认东海郡）"
+        required: false
+        default: "481a0f4b-e922-4b4e-952f-bd89ce9e930a"
+      device_name:
+        description: "设备名称（仅用于日志显示）"
+        required: false
+        default: "东海郡"
+
+concurrency:
+  group: play-latest-gist
+  cancel-in-progress: true
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Use official npm registry
+        run: npm config set registry https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Play latest content from Gist
+        env:
+          # token Gist：由 get-token.yml 维护（必填 secrets）
+          XIAOMI_TOKEN_GIST_ID: ${{ secrets.XIAOMI_TOKEN_GIST_ID }}
+          XIAOMI_TOKEN_GIST_TOKEN: ${{ secrets.XIAOMI_TOKEN_GIST_TOKEN }}
+
+          # 内容 Gist：手动触发时用 inputs；定时触发时 inputs 为空，脚本会使用默认值
+          CONTENT_GIST_ID: ${{ inputs.content_gist_id }}
+          CONTENT_GIST_TOKEN: ${{ inputs.content_gist_token }}
+
+          # 目标设备
+          XIAOMI_DEVICE_ID: ${{ inputs.device_id }}
+          XIAOMI_DEVICE_NAME: ${{ inputs.device_name }}
+        run: node play_latest_gist.js
+
