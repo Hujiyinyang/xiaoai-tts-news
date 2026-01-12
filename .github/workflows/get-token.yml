@@ -1,8 +1,8 @@
 name: Get Xiaomi Token
 
 permissions:
-  # 需要把生成的 xiaomi_token.json 提交回仓库，因此必须开启写权限
-  contents: write
+  # 方案C：更新到私有 Gist。此处不再需要写仓库内容权限，保留默认最小权限。
+  contents: read
 
 on:
   schedule:
@@ -51,13 +51,66 @@ jobs:
             echo "✗ Token 文件未生成"
             echo "success=false" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Commit and push token
+
+      - name: Update token to private Gist
         if: steps.check_success.outputs.success == 'true'
+        env:
+          # 你的私有 Gist ID（例如：a1b2c3d4e5f6...）
+          XIAOMI_TOKEN_GIST_ID: ${{ secrets.XIAOMI_TOKEN_GIST_ID }}
+          # 具有 gist 权限的 GitHub PAT（建议最小化权限：只勾选 gist）
+          XIAOMI_TOKEN_GIST_TOKEN: ${{ secrets.XIAOMI_TOKEN_GIST_TOKEN }}
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add xiaomi_token.json
-          # 仓库启用了 commitlint（conventional commits），这里用符合规范的提交信息
-          git commit -m "chore: update xiaomi token" -m "更新于 $(date +'%Y-%m-%d %H:%M:%S')"
-          git push
+          node - <<'NODE'
+          const fs = require('fs');
+          const https = require('https');
+
+          const gistId = process.env.XIAOMI_TOKEN_GIST_ID;
+          const token = process.env.XIAOMI_TOKEN_GIST_TOKEN;
+          if (!gistId || !token) {
+            console.error('缺少 Secrets：XIAOMI_TOKEN_GIST_ID 或 XIAOMI_TOKEN_GIST_TOKEN');
+            process.exit(1);
+          }
+
+          const content = fs.readFileSync('xiaomi_token.json', 'utf8');
+          const payload = JSON.stringify({
+            files: {
+              'xiaomi_token.json': { content },
+            },
+          });
+
+          const req = https.request(
+            {
+              method: 'PATCH',
+              hostname: 'api.github.com',
+              path: `/gists/${gistId}`,
+              headers: {
+                'User-Agent': 'xiaoai-tts-news',
+                Authorization: `token ${token}`,
+                Accept: 'application/vnd.github+json',
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload),
+              },
+            },
+            (res) => {
+              let data = '';
+              res.on('data', (chunk) => (data += chunk));
+              res.on('end', () => {
+                if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                  console.log('✅ 已更新私有 Gist 中的 xiaomi_token.json');
+                } else {
+                  console.error(`❌ 更新 Gist 失败：HTTP ${res.statusCode}`);
+                  console.error(data);
+                  process.exit(1);
+                }
+              });
+            }
+          );
+
+          req.on('error', (err) => {
+            console.error('❌ 请求 Gist API 出错：', err);
+            process.exit(1);
+          });
+
+          req.write(payload);
+          req.end();
+          NODE
