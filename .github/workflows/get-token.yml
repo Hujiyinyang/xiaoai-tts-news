@@ -1,5 +1,9 @@
 name: Get Xiaomi Token
 
+permissions:
+  # 需要把生成的 xiaomi_token.json 提交回仓库，因此必须开启写权限
+  contents: write
+
 on:
   schedule:
     # 测试模式: 每分钟运行一次, 连续运行3次用于验证
@@ -54,5 +58,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add xiaomi_token.json
-          git commit -m "Update Xiaomi token $(date +'%Y-%m-%d %H:%M:%S')"
+          # 仓库启用了 commitlint（conventional commits），这里用符合规范的提交信息
+          git commit -m "chore: update xiaomi token" -m "更新于 $(date +'%Y-%m-%d %H:%M:%S')"
           git push
