@@ -1,0 +1,58 @@
+name: Get Xiaomi Token
+
+on:
+  schedule:
+    # 测试模式: 每分钟运行一次, 连续运行3次用于验证
+    - cron: '* * * * *'
+    # 部署时改为: 每12小时运行一次
+    # - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  get-token:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Use official npm registry
+        run: npm config set registry https://registry.npmjs.org/
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Get Xiaomi Token
+        env:
+          XIAOMI_ACCOUNT: ${{ secrets.XIAOMI_ACCOUNT }}
+          XIAOMI_PASSWORD: ${{ secrets.XIAOMI_PASSWORD }}
+        run: node get_xiaomi_token.js
+      
+      - name: Check success count
+        id: check_success
+        run: |
+          # 检查最近3次运行是否都成功
+          # 读取 token 文件验证是否有效
+          if [ -f xiaomi_token.json ]; then
+            echo "✓ Token 文件已生成"
+            # 检查文件内容是否有效
+            if grep -q "serviceToken" xiaomi_token.json && grep -q "userId" xiaomi_token.json; then
+              echo "✓ Token 内容有效"
+              echo "success=true" >> $GITHUB_OUTPUT
+            else
+              echo "✗ Token 内容无效"
+              echo "success=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "✗ Token 文件未生成"
+            echo "success=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push token
+        if: steps.check_success.outputs.success == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add xiaomi_token.json
+          git commit -m "Update Xiaomi token $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
